@@ -36,13 +36,6 @@ class SpectracsPyServer(object):
         return '1.0.0'
 
     def getPersistentSpectrometers(self) -> Dict[str, Spectrometer]:
-
-        result="foo"
-        print("==========2=========")
-        session_factory()
-
-        print("==========1=========")
-
         persistLogicModule = PersistSpectrometerLogicModule()
         persistenceParameters = PersistenceParametersGetSpectrometers()
         result = persistLogicModule.getSpectrometers(persistenceParameters)
@@ -52,7 +45,7 @@ class SpectracsPyServer(object):
         return result
 
     def syncSpectrometers(self,spectrometers:List[Spectrometer]):
-        self.getPersistentSpectrometers()
+        persistentSpectrometers = self.getPersistentSpectrometers()
         for spectrometer in spectrometers:
             spectrometer.id
 
