@@ -26,7 +26,7 @@ def main():
     print("serveruri:%s" % serveruri)
     print("nameserverUri:%s" % nameserverUri)
 
-    nameserverDaemon.nameserver.register("spectracs.spectracsPyServer", serveruri)
+    nameserverDaemon.nameserver.register("sciens.spectracs.spectracsPyServer", serveruri)
 
     #Pyro4.Daemon.serveSimple(
     # pyrodaemon.serveSimple(
