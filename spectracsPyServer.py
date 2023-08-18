@@ -1,13 +1,16 @@
 from __future__ import print_function
-import socket
-import select
-import sys
 
-import Pyro4.core
-import Pyro4.naming
+
+import uuid
+import Pyro5.core
+import Pyro5.api
+import Pyro5.nameserver
+import Pyro5.serializers
 import select
 
 from sciens.spectracs.SpectracsPyServer import SpectracsPyServer
+from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
+from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
 
 
 def main():
@@ -15,11 +18,13 @@ def main():
     spectracsPyServer = SpectracsPyServer()
 
     hostname='192.168.8.111'
-    #hostname = '127.0.0.1'
 
-    # ns = Pyro4.locateNS()
-    nameserverUri, nameserverDaemon, broadcastServer = Pyro4.naming.startNS(host=hostname,port=8090)
-    pyrodaemon = Pyro4.core.Daemon(host=hostname)
+    # Pyro5.config.SERIALIZER = "json"
+
+    Pyro5.serializers.SerializerBase.register_class_to_dict(Spectrometer,SqlAlchemySerializer.classToDict)
+
+    nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=hostname,port=8090)
+    pyrodaemon = Pyro5.server.Daemon(host=hostname)
 
     serveruri = pyrodaemon.register(spectracsPyServer)
 
@@ -28,16 +33,8 @@ def main():
 
     nameserverDaemon.nameserver.register("sciens.spectracs.spectracsPyServer", serveruri)
 
-    #Pyro4.Daemon.serveSimple(
-    # pyrodaemon.serveSimple(
-    #         {
-    #             SpectracsPyServer: "sciens.SpectracsPyServer"
-    #         },
-    #         ns = False)
-
-    # below is our custom event loop.
     while True:
-        print("Waiting for events...")
+        print("Waiting for events "+str(uuid.uuid4()))
         # create sets of the socket objects we will be waiting on
         # (a set provides fast lookup compared to a list)
         nameserverSockets = set(nameserverDaemon.sockets)
@@ -51,24 +48,23 @@ def main():
         eventsForDaemon=[]
         for s in rs:
             if s is broadcastServer:
-                print("Broadcast server received a request")
+                print("broadcast server received a request")
                 # broadcastServer.processRequest()
             elif s in nameserverSockets:
                 eventsForNameserver.append(s)
             elif s in pyroSockets:
                 eventsForDaemon.append(s)
         if eventsForNameserver:
-            print("Nameserver received a request")
+            print("nameserver received a request")
             nameserverDaemon.events(eventsForNameserver)
         if eventsForDaemon:
-            print("Daemon received a request")
+            print("daemon received a request")
             pyrodaemon.events(eventsForDaemon)
-
 
     nameserverDaemon.close()
     broadcastServer.close()
     pyrodaemon.close()
-    print("done")
+    print("finished.")
 
 
 

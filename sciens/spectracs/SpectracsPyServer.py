@@ -2,14 +2,9 @@ from __future__ import print_function
 
 
 from typing import Dict, List
-import Pyro4
-from Pyro4 import expose, behavior
-from appdata import AppDataPaths
+from Pyro5.api import expose, behavior,callback
 
-from sciens.spectracs.logic.persistence.database.spectrometer.PersistSpectrometerLogicModule import \
-    PersistSpectrometerLogicModule
-from sciens.spectracs.logic.persistence.database.spectrometer.PersistenceParametersGetSpectrometers import \
-    PersistenceParametersGetSpectrometers
+from sciens.spectracs.logic.model.util.SpectrometerUtil import SpectrometerUtil
 from sciens.spectracs.model.databaseEntity.DbBase import session_factory, app_paths
 from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerSensor import SpectrometerSensor
@@ -20,6 +15,7 @@ from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerVendor im
 
 @expose
 @behavior(instance_mode="single")
+@callback
 class SpectracsPyServer(object):
     def __init__(self):
         self.__createBootstrapSession()
@@ -36,18 +32,15 @@ class SpectracsPyServer(object):
         return '1.0.0'
 
     def getPersistentSpectrometers(self) -> Dict[str, Spectrometer]:
-        persistLogicModule = PersistSpectrometerLogicModule()
-        persistenceParameters = PersistenceParametersGetSpectrometers()
-        result = persistLogicModule.getSpectrometers(persistenceParameters)
-        # result = self.getEntitiesByNames(entitiesByIds)
+        result = SpectrometerUtil().getPersistentSpectrometers()
         print('=====result=====')
         print(result)
         return result
 
-    def syncSpectrometers(self,spectrometers:List[Spectrometer]):
+    def syncSpectrometers(self, spectrometers: List[Spectrometer]):
         persistentSpectrometers = self.getPersistentSpectrometers()
+
         for spectrometer in spectrometers:
-            spectrometer.id
-
-
-
+            if spectrometer.id not in persistentSpectrometers:
+                SpectrometerUtil.saveSpectrometer(spectrometer)
+                continue
