@@ -22,6 +22,7 @@ def main():
     # Pyro5.config.SERIALIZER = "json"
 
     Pyro5.serializers.SerializerBase.register_class_to_dict(Spectrometer,SqlAlchemySerializer.classToDict)
+    Pyro5.serializers.SerializerBase.register_dict_to_class(Spectrometer, SqlAlchemySerializer.dictToClass)
 
     nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=hostname,port=8090)
     pyrodaemon = Pyro5.server.Daemon(host=hostname)

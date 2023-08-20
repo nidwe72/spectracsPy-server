@@ -31,15 +31,20 @@ class SpectracsPyServer(object):
     def getVersion(self):
         return '1.0.0'
 
+
     def getPersistentSpectrometers(self) -> Dict[str, Spectrometer]:
         result = SpectrometerUtil().getPersistentSpectrometers()
         print('=====result=====')
         print(result)
         return result
 
+    def getSpectrometers(self)-> Dict[str, Spectrometer]:
+        result = SpectrometerUtil().getSpectrometers()
+        return result
+
     def syncSpectrometers(self, spectrometers: List[Spectrometer]):
         persistentSpectrometers = self.getPersistentSpectrometers()
-
+        persistentSpectrometers=SpectrometerUtil.getEntitiesByIds(persistentSpectrometers)
         for spectrometer in spectrometers:
             if spectrometer.id not in persistentSpectrometers:
                 SpectrometerUtil.saveSpectrometer(spectrometer)
