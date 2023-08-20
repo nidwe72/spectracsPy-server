@@ -11,7 +11,7 @@ class SqlAlchemySerializer:
         result=None
         if isinstance(object,DbBaseEntityMixin):
             if isinstance(object,Spectrometer):
-                result=SpectrometerSchema().dumps(object)
+                result=SpectrometerSchema().dump(object)
             else:
                 result=object.to_dict()
         # return str(result)
@@ -21,6 +21,9 @@ class SqlAlchemySerializer:
     def dictToClass(className,dictionary):
         result = None
         if isinstance(object,DbBaseEntityMixin):
-            result=None
+            if isinstance(object,Spectrometer):
+                result=SpectrometerSchema().load(dictionary)
+            else:
+                result=None
 
         return result

@@ -17,7 +17,8 @@ def main():
 
     spectracsPyServer = SpectracsPyServer()
 
-    hostname='192.168.8.111'
+    # hostname='192.168.8.111'
+    hostname = '192.168.0.176'
 
     # Pyro5.config.SERIALIZER = "json"
 
