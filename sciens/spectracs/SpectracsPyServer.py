@@ -17,6 +17,9 @@ from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerVendor im
 @behavior(instance_mode="single")
 @callback
 class SpectracsPyServer(object):
+
+    PORT:int=8090
+
     def __init__(self):
         self.__createBootstrapSession()
 

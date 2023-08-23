@@ -26,15 +26,15 @@ def main():
     className=type(Spectrometer()).__module__+'-'+type(Spectrometer()).__name__
     Pyro5.serializers.SerializerBase.register_dict_to_class(className, SqlAlchemySerializer.dictToClass)
 
-    nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=hostname,port=8090)
-    pyrodaemon = Pyro5.server.Daemon(host=hostname)
+    nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=hostname,port=SpectracsPyServer.PORT)
+    pyroDaemon = Pyro5.server.Daemon(host=hostname)
 
-    serveruri = pyrodaemon.register(spectracsPyServer)
+    serverUri = pyroDaemon.register(spectracsPyServer)
 
-    print("serveruri:%s" % serveruri)
+    print("serverUri:%s" % serverUri)
     print("nameserverUri:%s" % nameserverUri)
 
-    nameserverDaemon.nameserver.register("sciens.spectracs.spectracsPyServer", serveruri)
+    nameserverDaemon.nameserver.register("sciens.spectracs.spectracsPyServer", serverUri)
 
     while True:
         print("Waiting for events "+str(uuid.uuid4()))
@@ -42,7 +42,7 @@ def main():
         # (a set provides fast lookup compared to a list)
         nameserverSockets = set(nameserverDaemon.sockets)
 
-        pyroSockets = set(pyrodaemon.sockets)
+        pyroSockets = set(pyroDaemon.sockets)
         rs=[broadcastServer]  # only the broadcast server is directly usable as a select() object
         rs.extend(nameserverSockets)
         rs.extend(pyroSockets)
@@ -62,11 +62,11 @@ def main():
             nameserverDaemon.events(eventsForNameserver)
         if eventsForDaemon:
             print("daemon received a request")
-            pyrodaemon.events(eventsForDaemon)
+            pyroDaemon.events(eventsForDaemon)
 
     nameserverDaemon.close()
     broadcastServer.close()
-    pyrodaemon.close()
+    pyroDaemon.close()
     print("finished.")
 
 
