@@ -20,7 +20,7 @@ def main():
 
     # hostname='192.168.8.111'
     hostname = '192.168.0.176'
-    hostname = '172.26.1.246'
+    hostname = '3.124.93.31'
 
 
     # Pyro5.config.SERIALIZER = "json"
