@@ -6,6 +6,7 @@ import Pyro5.core
 import Pyro5.api
 import Pyro5.nameserver
 import Pyro5.serializers
+import Pyro5.server
 import select
 
 from sciens.spectracs.SpectracsPyServer import SpectracsPyServer
@@ -29,7 +30,7 @@ def main():
     Pyro5.serializers.SerializerBase.register_dict_to_class(className, SqlAlchemySerializer.dictToClass)
 
     nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=hostname,port=SpectracsPyServer.PORT)
-    pyroDaemon = Pyro5.server.Daemon(host=hostname)
+    pyroDaemon = Pyro5.server.Daemon(host=hostname,port=8091)
 
     serverUri = pyroDaemon.register(spectracsPyServer)
 
