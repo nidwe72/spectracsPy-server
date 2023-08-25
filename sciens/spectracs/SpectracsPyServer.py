@@ -18,6 +18,11 @@ from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerVendor im
 @callback
 class SpectracsPyServer(object):
 
+
+    # on the real server a port forwarding from sciens.at:8092 to localIp:8091 is needed:
+    # iptables -t nat -A PREROUTING -p tcp -i eth0 --dport 8092 -j DNAT --to-destination 172.26.1.246:8091
+    # iptables -A FORWARD -p tcp -d 172.26.1.246 --dport 8091 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+
     NAMESERVER_HOST: str = 'LOCAL'
     NAMESERVER_PORT:int=8090
 

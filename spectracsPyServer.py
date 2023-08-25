@@ -19,6 +19,8 @@ from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import S
 
 def main():
 
+
+
     parser = argparse.ArgumentParser(description='server for spectracs application')
     parser.add_argument('--nameserverHost', help='nameserver host',default=SpectracsPyServer.NAMESERVER_HOST)
     parser.add_argument('--nameserverPort', help='nameserver port',default=SpectracsPyServer.NAMESERVER_PORT)
@@ -71,8 +73,6 @@ def main():
     print(appliedArgs)
 
     spectracsPyServer = SpectracsPyServer()
-
-    # Pyro5.config.SERIALIZER = "json"
 
     Pyro5.serializers.SerializerBase.register_class_to_dict(Spectrometer,SqlAlchemySerializer.classToDict)
     className=type(Spectrometer()).__module__+'-'+type(Spectrometer()).__name__
