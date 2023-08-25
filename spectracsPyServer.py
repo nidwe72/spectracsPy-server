@@ -9,19 +9,65 @@ import Pyro5.serializers
 import Pyro5.server
 import select
 
+import argparse
+
 from sciens.spectracs.SpectracsPyServer import SpectracsPyServer
 from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
+from sciens.spectracs.logic.base.network.NetworkUtil import NetworkUtil
 from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
 
 
 def main():
 
+    parser = argparse.ArgumentParser(description='server for spectracs application')
+    parser.add_argument('--nameserverHost', help='nameserver host',default=SpectracsPyServer.NAMESERVER_HOST)
+    parser.add_argument('--nameserverPort', help='nameserver port',default=SpectracsPyServer.NAMESERVER_PORT)
+
+    parser.add_argument('--daemonHost', help='daemon host',default=SpectracsPyServer.DAEMON_HOST)
+    parser.add_argument('--daemonPort', help='daemon port',default=SpectracsPyServer.DAEMON_PORT)
+
+    parser.add_argument('--daemonNatHost', help='daemon NAT host',default=SpectracsPyServer.DAEMON_NAT_HOST)
+    parser.add_argument('--daemonNatPort', help='daemon NAT port',default=SpectracsPyServer.DAEMON_NAT_PORT)
+
+    parser.add_argument('--local', help='flag indicating that nameserver/daemon is started on local development machine',action=argparse.BooleanOptionalAction)
+
+    parser.add_argument('--localDaemonHost',
+                        help='flag indicating that daemon.host is filled with local ip address',
+                        action=argparse.BooleanOptionalAction)
+
+    args = parser.parse_args()
+    nameserverHost=args.nameserverHost
+    nameserverPort = args.nameserverPort
+    daemonHost=args.daemonHost
+    daemonPort = args.daemonPort
+
+    daemonNatHost=args.daemonNatHost
+    daemonNatPort = args.daemonNatPort
+
+    local = args.local
+    if local:
+        nameserverHost = NetworkUtil().getLocalIpAddress()
+        daemonHost=nameserverHost
+        daemonNatHost=None
+        daemonNatPort = None
+
+    localDaemonHost = args.localDaemonHost
+    if localDaemonHost:
+        daemonHost = NetworkUtil().getLocalIpAddress()
+
+    appliedArgs={}
+    appliedArgs['nameserverHost']=nameserverHost
+    appliedArgs['nameserverPort'] = nameserverPort
+
+    appliedArgs['daemonHost'] = daemonHost
+    appliedArgs['daemonPort'] = daemonPort
+    appliedArgs['daemonNatHost'] = daemonNatHost
+    appliedArgs['daemonNatPort'] = daemonNatPort
+
+    print('appliedArgs:')
+    print(appliedArgs)
+
     spectracsPyServer = SpectracsPyServer()
-
-    # hostname='192.168.8.111'
-    hostname = '192.168.0.176'
-    hostname = '3.124.93.31'
-
 
     # Pyro5.config.SERIALIZER = "json"
 
@@ -29,8 +75,8 @@ def main():
     className=type(Spectrometer()).__module__+'-'+type(Spectrometer()).__name__
     Pyro5.serializers.SerializerBase.register_dict_to_class(className, SqlAlchemySerializer.dictToClass)
 
-    nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=hostname,port=SpectracsPyServer.PORT)
-    pyroDaemon = Pyro5.server.Daemon(host=hostname,port=8091)
+    nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=nameserverHost, port=nameserverPort)
+    pyroDaemon = Pyro5.server.Daemon(host=daemonHost,port=daemonPort,nathost=daemonNatHost,natport=daemonNatPort)
 
     serverUri = pyroDaemon.register(spectracsPyServer)
 
