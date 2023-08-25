@@ -35,10 +35,20 @@ def main():
                         help='flag indicating that daemon.host is filled with local ip address',
                         action=argparse.BooleanOptionalAction)
 
+    localIpAddress=NetworkUtil().getLocalIpAddress()
+
     args = parser.parse_args()
+
     nameserverHost=args.nameserverHost
+    if nameserverHost=='LOCAL':
+        nameserverHost=localIpAddress
+
     nameserverPort = args.nameserverPort
+
     daemonHost=args.daemonHost
+    if daemonHost=='LOCAL':
+        daemonHost=localIpAddress
+
     daemonPort = args.daemonPort
 
     daemonNatHost=args.daemonNatHost
@@ -46,19 +56,12 @@ def main():
 
     local = args.local
     if local:
-        nameserverHost = NetworkUtil().getLocalIpAddress()
-        daemonHost=nameserverHost
         daemonNatHost=None
         daemonNatPort = None
-
-    localDaemonHost = args.localDaemonHost
-    if localDaemonHost:
-        daemonHost = NetworkUtil().getLocalIpAddress()
 
     appliedArgs={}
     appliedArgs['nameserverHost']=nameserverHost
     appliedArgs['nameserverPort'] = nameserverPort
-
     appliedArgs['daemonHost'] = daemonHost
     appliedArgs['daemonPort'] = daemonPort
     appliedArgs['daemonNatHost'] = daemonNatHost

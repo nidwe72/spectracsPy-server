@@ -18,10 +18,10 @@ from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerVendor im
 @callback
 class SpectracsPyServer(object):
 
-    NAMESERVER_HOST: str = 'sciens.at'
+    NAMESERVER_HOST: str = 'LOCAL'
     NAMESERVER_PORT:int=8090
 
-    DAEMON_HOST: str = 'sciens.at'
+    DAEMON_HOST: str = 'LOCAL'
     DAEMON_PORT:int=8091
 
     DAEMON_NAT_HOST: str = 'sciens.at'
