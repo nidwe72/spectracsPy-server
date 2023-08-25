@@ -5,6 +5,7 @@ from typing import Dict, List
 from Pyro5.api import expose, behavior,callback
 
 from sciens.spectracs.logic.model.util.SpectrometerUtil import SpectrometerUtil
+from sciens.spectracs.logic.spectral.util.SpectralLineMasterDataUtil import SpectralLineMasterDataUtil
 from sciens.spectracs.model.databaseEntity.DbBase import session_factory, app_paths
 from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerSensor import SpectrometerSensor
@@ -13,7 +14,7 @@ from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerStyle imp
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerVendor import SpectrometerVendor
 
 
-@expose
+
 @behavior(instance_mode="single")
 @callback
 class SpectracsPyServer(object):
@@ -46,21 +47,13 @@ class SpectracsPyServer(object):
     def getVersion(self):
         return '1.0.0'
 
-
-    def getPersistentSpectrometers(self) -> Dict[str, Spectrometer]:
-        result = SpectrometerUtil().getPersistentSpectrometers()
-        print('=====result=====')
-        print(result)
-        return result
-
+    @expose
     def getSpectrometers(self)-> Dict[str, Spectrometer]:
         result = SpectrometerUtil().getSpectrometers()
         return result
 
-    def syncSpectrometers(self, spectrometers: List[Spectrometer]):
-        persistentSpectrometers = self.getPersistentSpectrometers()
-        persistentSpectrometers=SpectrometerUtil.getEntitiesByIds(persistentSpectrometers)
-        for spectrometer in spectrometers:
-            if spectrometer.id not in persistentSpectrometers:
-                SpectrometerUtil.saveSpectrometer(spectrometer)
-                continue
+    def getSpectralLineMasterDatas(self)-> Dict[str, Spectrometer]:
+        result = SpectralLineMasterDataUtil().getSpectralLineMasterDataByName()
+        return result
+
+
