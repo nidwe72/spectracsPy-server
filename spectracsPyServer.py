@@ -14,12 +14,11 @@ import argparse
 from sciens.spectracs.SpectracsPyServer import SpectracsPyServer
 from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
 from sciens.spectracs.logic.base.network.NetworkUtil import NetworkUtil
+from sciens.spectracs.model.databaseEntity.spectral.device.SpectralLineMasterData import SpectralLineMasterData
 from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
 
 
 def main():
-
-
 
     parser = argparse.ArgumentParser(description='server for spectracs application')
     parser.add_argument('--nameserverHost', help='nameserver host',default=SpectracsPyServer.NAMESERVER_HOST)
@@ -74,9 +73,7 @@ def main():
 
     spectracsPyServer = SpectracsPyServer()
 
-    Pyro5.serializers.SerializerBase.register_class_to_dict(Spectrometer,SqlAlchemySerializer.classToDict)
-    className=type(Spectrometer()).__module__+'-'+type(Spectrometer()).__name__
-    Pyro5.serializers.SerializerBase.register_dict_to_class(className, SqlAlchemySerializer.dictToClass)
+    SpectracsPyServer.configure()
 
     nameserverUri, nameserverDaemon, broadcastServer = Pyro5.api.start_ns(host=nameserverHost, port=nameserverPort)
     pyroDaemon = Pyro5.server.Daemon(host=daemonHost,port=daemonPort,nathost=daemonNatHost,natport=daemonNatPort)

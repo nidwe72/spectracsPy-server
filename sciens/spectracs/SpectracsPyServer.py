@@ -2,11 +2,16 @@ from __future__ import print_function
 
 
 from typing import Dict, List
+
+import Pyro5
+import Pyro5.serializers
 from Pyro5.api import expose, behavior,callback
 
+from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
 from sciens.spectracs.logic.model.util.SpectrometerUtil import SpectrometerUtil
 from sciens.spectracs.logic.spectral.util.SpectralLineMasterDataUtil import SpectralLineMasterDataUtil
 from sciens.spectracs.model.databaseEntity.DbBase import session_factory, app_paths
+from sciens.spectracs.model.databaseEntity.spectral.device.SpectralLineMasterData import SpectralLineMasterData
 from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerSensor import SpectrometerSensor
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerSensorChip import SpectrometerSensorChip
@@ -47,13 +52,26 @@ class SpectracsPyServer(object):
     def getVersion(self):
         return '1.0.0'
 
+    @staticmethod
+    def configure():
+        serializer = Pyro5.serializers.SerializerBase
+
+        serializer.register_class_to_dict(Spectrometer, SqlAlchemySerializer.classToDictSpectrometer)
+        className = type(Spectrometer()).__module__ + '-' + type(Spectrometer()).__name__
+        serializer.register_dict_to_class(className, SqlAlchemySerializer.dictToClassSpectrometer)
+
+        serializer.register_class_to_dict(SpectralLineMasterData,
+                                          SqlAlchemySerializer.classToDictSpectralLineMasterData)
+        className = type(SpectralLineMasterData()).__module__ + '-' + type(SpectralLineMasterData()).__name__
+        serializer.register_dict_to_class(className, SqlAlchemySerializer.dictToClassSpectralLineMasterData)
+
     @expose
     def getSpectrometers(self)-> Dict[str, Spectrometer]:
         result = SpectrometerUtil().getSpectrometers()
         return result
 
-    def getSpectralLineMasterDatas(self)-> Dict[str, Spectrometer]:
-        result = SpectralLineMasterDataUtil().getSpectralLineMasterDataByName()
+    @expose
+    def getSpectralLineMasterDatasByNames(self)-> Dict[str,SpectralLineMasterData]:
+        result = SpectralLineMasterDataUtil().getSpectralLineMasterDatasByNames();
         return result
-
 
