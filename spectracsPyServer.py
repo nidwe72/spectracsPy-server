@@ -12,11 +12,7 @@ import select
 import argparse
 
 from sciens.spectracs.SpectracsPyServer import SpectracsPyServer
-from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
 from sciens.spectracs.logic.base.network.NetworkUtil import NetworkUtil
-from sciens.spectracs.model.databaseEntity.spectral.device.SpectralLineMasterData import SpectralLineMasterData
-from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
-
 
 def main():
 
