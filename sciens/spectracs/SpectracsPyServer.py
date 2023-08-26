@@ -72,6 +72,6 @@ class SpectracsPyServer(object):
 
     @expose
     def getSpectralLineMasterDatasByNames(self)-> Dict[str,SpectralLineMasterData]:
-        result = SpectralLineMasterDataUtil().getSpectralLineMasterDatasByNames();
+        result = SpectralLineMasterDataUtil().getSpectralLineMasterDatasByNames()
         return result
 
