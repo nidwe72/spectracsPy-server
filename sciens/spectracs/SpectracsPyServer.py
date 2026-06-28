@@ -10,6 +10,8 @@ from Pyro5.api import expose, behavior,callback
 from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
 from sciens.spectracs.logic.model.util.SpectrometerUtil import SpectrometerUtil
 from sciens.spectracs.logic.spectral.util.SpectralLineMasterDataUtil import SpectralLineMasterDataUtil
+from sciens.spectracs.logic.user.LoginLogicModule import LoginLogicModule
+from sciens.spectracs.logic.user.UserSeedLogicModule import UserSeedLogicModule
 from sciens.spectracs.model.databaseEntity.DbBase import session_factory, app_paths
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectralLineMasterData import SpectralLineMasterData
 from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
@@ -40,6 +42,9 @@ class SpectracsPyServer(object):
 
     def __init__(self):
         self.__createBootstrapSession()
+        # Seed roles + the development users (endUser/endUser, masterUser/masterUser) into the
+        # separate server DB. Idempotent — safe to run on every server start.
+        UserSeedLogicModule().seed()
 
     def __createBootstrapSession(self):
         SpectrometerStyle()
@@ -74,4 +79,9 @@ class SpectracsPyServer(object):
     def getSpectralLineMasterDatasByNames(self)-> Dict[str,SpectralLineMasterData]:
         result = SpectralLineMasterDataUtil().getSpectralLineMasterDatasByNames()
         return result
+
+    @expose
+    def login(self, username, password) -> Dict:
+        # Returns a plain dict {ok, userId, username, roles, message} — never the password hash.
+        return LoginLogicModule().login(username, password)
 
