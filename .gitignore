@@ -1,0 +1,3 @@
+# Python bytecode caches (regenerable)
+__pycache__/
+*.py[cod]
