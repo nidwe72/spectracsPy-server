@@ -11,6 +11,7 @@ from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
 from sciens.spectracs.logic.model.util.SpectrometerUtil import SpectrometerUtil
 from sciens.spectracs.logic.spectral.util.SpectralLineMasterDataUtil import SpectralLineMasterDataUtil
 from sciens.spectracs.logic.user.LoginLogicModule import LoginLogicModule
+from sciens.spectracs.logic.user.UserAdminLogicModule import UserAdminLogicModule
 from sciens.spectracs.logic.user.UserSeedLogicModule import UserSeedLogicModule
 from sciens.spectracs.model.databaseEntity.DbBase import session_factory, app_paths
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectralLineMasterData import SpectralLineMasterData
@@ -84,4 +85,21 @@ class SpectracsPyServer(object):
     def login(self, username, password) -> Dict:
         # Returns a plain dict {ok, userId, username, roles, message} — never the password hash.
         return LoginLogicModule().login(username, password)
+
+    @expose
+    def listUsers(self) -> List[Dict]:
+        # Returns a list of plain user DTOs — never an AppUser entity, never the password hash.
+        return UserAdminLogicModule().listUsers()
+
+    @expose
+    def createUser(self, username, password, displayName, enabled, roleName) -> Dict:
+        return UserAdminLogicModule().createUser(username, password, displayName, enabled, roleName)
+
+    @expose
+    def updateUser(self, userId, displayName, enabled, roleName, newPassword) -> Dict:
+        return UserAdminLogicModule().updateUser(userId, displayName, enabled, roleName, newPassword)
+
+    @expose
+    def deleteUser(self, userId) -> Dict:
+        return UserAdminLogicModule().deleteUser(userId)
 
