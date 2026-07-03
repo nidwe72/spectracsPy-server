@@ -1,0 +1,8 @@
+# SERVER app (Android APK) — headless, built with MAINLINE python-for-android (D12).
+# No Qt, no scipy. Runs the Pyro5 daemon in a foreground service on a non-main thread (P5).
+Pyro5==5.14
+SQLAlchemy==2.0.12
+SQLAlchemy-serializer==1.4.1
+marshmallow==3.20.1
+marshmallow-sqlalchemy==0.29.0
+bcrypt==5.0.0      # (recipe) p4a bcrypt recipe

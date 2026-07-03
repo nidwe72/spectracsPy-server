@@ -13,7 +13,7 @@ from sciens.spectracs.logic.spectral.util.SpectralLineMasterDataUtil import Spec
 from sciens.spectracs.logic.user.LoginLogicModule import LoginLogicModule
 from sciens.spectracs.logic.user.UserAdminLogicModule import UserAdminLogicModule
 from sciens.spectracs.logic.user.UserSeedLogicModule import UserSeedLogicModule
-from sciens.spectracs.model.databaseEntity.DbBase import session_factory, app_paths
+from sciens.spectracs.model.databaseEntity.DbBase import session_factory
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectralLineMasterData import SpectralLineMasterData
 from sciens.spectracs.model.databaseEntity.spectral.device.Spectrometer import Spectrometer
 from sciens.spectracs.model.databaseEntity.spectral.device.SpectrometerSensor import SpectrometerSensor
@@ -40,6 +40,31 @@ class SpectracsPyServer(object):
 
     DAEMON_NAT_HOST: str = 'sciens.at'
     DAEMON_NAT_PORT:int=8092
+
+    # Two-app on-device model (P5/P6): the server app hosts a plain Pyro5 daemon on a FIXED loopback
+    # address with a FIXED object id, so the client builds the URI directly with NO nameserver
+    # (Pyro's UDP-broadcast discovery does not work across Android app sandboxes).
+    LOCAL_HOST: str = '127.0.0.1'
+    LOCAL_PORT: int = 8091
+    LOCAL_OBJECT_ID: str = 'sciens.spectracs.spectracsPyServer'
+
+    @classmethod
+    def localUri(cls) -> str:
+        return "PYRO:%s@%s:%s" % (cls.LOCAL_OBJECT_ID, cls.LOCAL_HOST, cls.LOCAL_PORT)
+
+    @classmethod
+    def serveLocalForever(cls):
+        """Run the server as a plain Pyro5 daemon on LOCAL_HOST:LOCAL_PORT with a fixed object id
+        and NO nameserver. Blocking — the Android foreground service (P5) runs this on a non-main
+        thread. Reachable at cls.localUri(). Uses selectors internally (not asyncio), so it is safe
+        under Chaquopy/p4a threads."""
+        import Pyro5.server
+        cls.configure()
+        server = cls()
+        daemon = Pyro5.server.Daemon(host=cls.LOCAL_HOST, port=cls.LOCAL_PORT)
+        daemon.register(server, objectId=cls.LOCAL_OBJECT_ID)
+        print("SpectracsPyServer serving locally at %s" % cls.localUri())
+        daemon.requestLoop()
 
     def __init__(self):
         self.__createBootstrapSession()
