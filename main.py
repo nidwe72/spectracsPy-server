@@ -1,22 +1,43 @@
-"""python-for-android entry point for the Spectracs SERVER app (P5).
+"""p4a ACTIVITY entry point for the Spectracs SERVER app.
 
-p4a launches ``main.py``. This makes the sibling source roots importable, then runs the server as a
-plain Pyro5 daemon on a FIXED 127.0.0.1 port with a fixed object id and NO nameserver — the two-app
-on-device model. Blocking; the Android foreground service hosts this (see docs/SPEC_android_port.md
-P5). On desktop, run ``spectracsPyServer.py`` for the classic nameserver-based server instead.
+The Pyro5 daemon runs in a foreground SERVICE (``service_pyro.py``, a separate ``:service_pyro``
+process) so it survives the activity being backgrounded or closed. This activity just requests the
+notification permission, starts that service, and idles. On desktop, run ``spectracsPyServer.py`` for
+the classic nameserver-based server instead. See docs/SPEC_android_port.md §9 (P5/P6).
 """
-import os
-import sys
+import time
 
-_here = os.path.dirname(os.path.abspath(__file__))
-_parent = os.path.dirname(_here)
-for _sibling in ("spectracsPy-model", "spectracsPy-base", "spectracsPy"):
-    _path = os.path.join(_parent, _sibling)
-    if os.path.isdir(_path) and _path not in sys.path:
-        sys.path.insert(0, _path)
-if _here not in sys.path:
-    sys.path.insert(0, _here)
+# Ask for the notification permission so the foreground-service notification is visible (Android 13+).
+# Best-effort: the `android` module only exists on-device, and the service still runs if this is denied.
+try:
+    from android.permissions import Permission, request_permissions
+    request_permissions([Permission.POST_NOTIFICATIONS])
+except Exception as exc:  # noqa: BLE001 — never let permission plumbing crash the launcher
+    print("POST_NOTIFICATIONS request skipped:", exc)
 
-from sciens.spectracs.SpectracsPyServer import SpectracsPyServer  # noqa: E402
+# Start the foreground service (separate `:service_pyro` process) that hosts the Pyro5 daemon.
+from jnius import autoclass  # noqa: E402 — pyjnius is only importable on-device
 
-SpectracsPyServer.serveLocalForever()
+PythonActivity = autoclass("org.kivy.android.PythonActivity")
+ServicePyro = autoclass("at.sciens.spectracsserver.ServicePyro")
+ServicePyro.start(
+    PythonActivity.mActivity,
+    "",                                   # smallIconName — "" => default app icon
+    "Spectracs Server",                   # notification contentTitle
+    "Serving locally on 127.0.0.1:8091",  # notification contentText
+    "",                                   # pythonServiceArgument
+)
+print("Spectracs Server: foreground service started.")
+
+# The server is headless (no UI), so don't leave the user staring at a blank SDL window — send the
+# activity to the background right after starting the service. They return to the launcher; the
+# foreground service keeps serving (its persistent notification is the "running" indicator).
+# Re-tapping the icon just re-runs this (starting an already-running service is harmless).
+try:
+    PythonActivity.mActivity.moveTaskToBack(True)
+except Exception as exc:  # noqa: BLE001 — never let this cosmetic step crash the launcher
+    print("moveTaskToBack skipped:", exc)
+
+# Keep the activity's python thread alive (harmless) so p4a doesn't treat main.py returning as exit.
+while True:
+    time.sleep(3600)
