@@ -128,3 +128,31 @@ class SpectracsPyServer(object):
     def deleteUser(self, userId) -> Dict:
         return UserAdminLogicModule().deleteUser(userId)
 
+    # --- connection & calibration (SPEC_connection_and_calibration_ux.md §4) ---
+
+    @expose
+    def resolveInstrumentBySerial(self, serial) -> Dict:
+        # PUBLIC: serial -> {ok, deviceCodeName, pluginCodeRef, calibration, message}.
+        from sciens.spectracs.logic.instrument.InstrumentLogicModule import InstrumentLogicModule
+        return InstrumentLogicModule().resolveBundle(serial)
+
+    @expose
+    def registerEndUser(self, username, password, email, firstName, lastName, serial) -> Dict:
+        # PUBLIC (pre-login): create an END_USER against a master-authored serial; returns the bundle.
+        from sciens.spectracs.logic.user.RegisterUserLogicModule import RegisterUserLogicModule
+        return RegisterUserLogicModule().registerEndUser(username, password, email, firstName, lastName, serial)
+
+    @expose
+    def listPlugins(self) -> List[Dict]:
+        # MASTER: plugin catalog as plain DTOs.
+        from sciens.spectracs.logic.persistence.database.plugin.PersistPluginLogicModule import PersistPluginLogicModule
+        return [{"id": p.id, "title": p.title, "codeRef": p.codeRef, "version": p.version, "pdfRef": p.pdfRef}
+                for p in PersistPluginLogicModule().listPlugins()]
+
+    @expose
+    def savePlugin(self, title, codeRef, version, pdfRef=None) -> Dict:
+        # MASTER: upsert a plugin (keyed on codeRef).
+        from sciens.spectracs.logic.persistence.database.plugin.PersistPluginLogicModule import PersistPluginLogicModule
+        p = PersistPluginLogicModule().upsert(title, codeRef, version, pdfRef)
+        return {"ok": True, "id": p.id, "codeRef": p.codeRef}
+
