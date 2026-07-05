@@ -128,6 +128,11 @@ class SpectracsPyServer(object):
     def deleteUser(self, userId) -> Dict:
         return UserAdminLogicModule().deleteUser(userId)
 
+    @expose
+    def setRegisteredSerial(self, userId, serial) -> Dict:
+        # MASTER manual override of the user<->serial link (SPEC §11).
+        return UserAdminLogicModule().setRegisteredSerial(userId, serial)
+
     # --- connection & calibration (SPEC_connection_and_calibration_ux.md §4) ---
 
     @expose
