@@ -156,3 +156,25 @@ class SpectracsPyServer(object):
         p = PersistPluginLogicModule().upsert(title, codeRef, version, pdfRef)
         return {"ok": True, "id": p.id, "codeRef": p.codeRef}
 
+    @expose
+    def saveSpectrometerProfile(self, serial, deviceCodeName, calibration=None) -> Dict:
+        # MASTER: upsert the serial-keyed profile (device + calibration) on the server.
+        from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
+        return InstrumentAuthoringLogicModule().saveProfile(serial, deviceCodeName, calibration)
+
+    @expose
+    def saveSpectrometerSetup(self, serial, pluginCodeRef) -> Dict:
+        # MASTER: bind the serial's profile to a plugin.
+        from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
+        return InstrumentAuthoringLogicModule().saveSetup(serial, pluginCodeRef)
+
+    @expose
+    def listSpectrometerProfiles(self) -> List[Dict]:
+        from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
+        return InstrumentAuthoringLogicModule().listProfiles()
+
+    @expose
+    def listSpectrometerSetups(self) -> List[Dict]:
+        from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
+        return InstrumentAuthoringLogicModule().listSetups()
+
