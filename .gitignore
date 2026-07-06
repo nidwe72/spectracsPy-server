@@ -1,3 +1,7 @@
 # Python bytecode caches (regenerable)
 __pycache__/
 *.py[cod]
+
+# Server secrets — the real .env lives in ../spectracsPy-server-config/ (outside the repo), but
+# guard against a stray copy here too. Only .env.example (blank template) is committed.
+.env

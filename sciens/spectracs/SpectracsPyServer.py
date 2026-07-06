@@ -183,3 +183,22 @@ class SpectracsPyServer(object):
         from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
         return InstrumentAuthoringLogicModule().listSetups()
 
+    # --- payment (SPEC_paypal_payment.md §4.2) ---
+
+    @expose
+    def createPayment(self, userId) -> Dict:
+        # Server sets the amount (anti-tampering); returns {ok, orderId, approvalUrl, transactionId, ...}.
+        from sciens.spectracs.logic.payment.PaymentLogicModule import PaymentLogicModule
+        return PaymentLogicModule().createPayment(userId)
+
+    @expose
+    def capturePayment(self, userId, orderId) -> Dict:
+        from sciens.spectracs.logic.payment.PaymentLogicModule import PaymentLogicModule
+        return PaymentLogicModule().capturePayment(userId, orderId)
+
+    @expose
+    def listTransactions(self, userId) -> List[Dict]:
+        # Plain transaction DTOs for the logged-in user, newest first.
+        from sciens.spectracs.logic.payment.PaymentLogicModule import PaymentLogicModule
+        return PaymentLogicModule().listTransactions(userId)
+
