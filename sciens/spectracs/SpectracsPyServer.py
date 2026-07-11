@@ -202,3 +202,11 @@ class SpectracsPyServer(object):
         from sciens.spectracs.logic.payment.PaymentLogicModule import PaymentLogicModule
         return PaymentLogicModule().listTransactions(userId)
 
+    # --- LIMS integration (SPEC_lims_integration.md §2, L1-RPC) ----------------
+    @expose
+    def publishSampleToLims(self, userId, pluginLimsInfo, pdfBase64) -> Dict:
+        # Create a LIMS sample for the authenticated user + attach the M2 PDF (base64). The server holds
+        # the LIMS creds and fills the customer/instrument identity from the AppUser + spectrometer graph.
+        from sciens.spectracs.logic.lims.LimsLogicModule import LimsLogicModule
+        return LimsLogicModule().publishSample(userId, pluginLimsInfo, pdfBase64)
+
