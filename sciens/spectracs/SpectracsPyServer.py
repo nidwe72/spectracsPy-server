@@ -7,7 +7,7 @@ import Pyro5
 import Pyro5.serializers
 from Pyro5.api import expose, behavior,callback
 
-from sciens.spectracs.SqlAlchemySerializer import SqlAlchemySerializer
+from sciens.spectracs.SpectracsServerEndpoint import SpectracsServerEndpoint
 from sciens.spectracs.logic.model.util.SpectrometerUtil import SpectrometerUtil
 from sciens.spectracs.logic.spectral.util.SpectralLineMasterDataUtil import SpectralLineMasterDataUtil
 from sciens.spectracs.logic.user.LoginLogicModule import LoginLogicModule
@@ -32,25 +32,20 @@ class SpectracsPyServer(object):
     # iptables -t nat -A PREROUTING -p tcp -i eth0 --dport 8092 -j DNAT --to-destination 172.26.1.246:8091
     # iptables -A FORWARD -p tcp -d 172.26.1.246 --dport 8091 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
 
-    NAMESERVER_HOST: str = 'LOCAL'
-    NAMESERVER_PORT:int=8090
+    # Connection constants + Pyro serialization now live in SpectracsServerEndpoint (S7) — the shared
+    # client/server contract, importable without this @expose impl. Re-exposed here so serveLocalForever and
+    # the launchers (spectracsPyServer.py, service_pyro.py) keep referencing SpectracsPyServer.* unchanged.
+    NAMESERVER_HOST = SpectracsServerEndpoint.NAMESERVER_HOST
+    NAMESERVER_PORT = SpectracsServerEndpoint.NAMESERVER_PORT
+    DAEMON_HOST = SpectracsServerEndpoint.DAEMON_HOST
+    DAEMON_PORT = SpectracsServerEndpoint.DAEMON_PORT
+    DAEMON_NAT_HOST = SpectracsServerEndpoint.DAEMON_NAT_HOST
+    DAEMON_NAT_PORT = SpectracsServerEndpoint.DAEMON_NAT_PORT
+    LOCAL_HOST = SpectracsServerEndpoint.LOCAL_HOST
+    LOCAL_PORT = SpectracsServerEndpoint.LOCAL_PORT
+    LOCAL_OBJECT_ID = SpectracsServerEndpoint.LOCAL_OBJECT_ID
 
-    DAEMON_HOST: str = 'LOCAL'
-    DAEMON_PORT:int=8091
-
-    DAEMON_NAT_HOST: str = 'sciens.at'
-    DAEMON_NAT_PORT:int=8092
-
-    # Two-app on-device model (P5/P6): the server app hosts a plain Pyro5 daemon on a FIXED loopback
-    # address with a FIXED object id, so the client builds the URI directly with NO nameserver
-    # (Pyro's UDP-broadcast discovery does not work across Android app sandboxes).
-    LOCAL_HOST: str = '127.0.0.1'
-    LOCAL_PORT: int = 8091
-    LOCAL_OBJECT_ID: str = 'sciens.spectracs.spectracsPyServer'
-
-    @classmethod
-    def localUri(cls) -> str:
-        return "PYRO:%s@%s:%s" % (cls.LOCAL_OBJECT_ID, cls.LOCAL_HOST, cls.LOCAL_PORT)
+    localUri = SpectracsServerEndpoint.localUri
 
     @classmethod
     def serveLocalForever(cls):
@@ -83,18 +78,7 @@ class SpectracsPyServer(object):
     def getVersion(self):
         return '1.0.0'
 
-    @staticmethod
-    def configure():
-        serializer = Pyro5.serializers.SerializerBase
-
-        serializer.register_class_to_dict(Spectrometer, SqlAlchemySerializer.classToDictSpectrometer)
-        className = type(Spectrometer()).__module__ + '-' + type(Spectrometer()).__name__
-        serializer.register_dict_to_class(className, SqlAlchemySerializer.dictToClassSpectrometer)
-
-        serializer.register_class_to_dict(SpectralLineMasterData,
-                                          SqlAlchemySerializer.classToDictSpectralLineMasterData)
-        className = type(SpectralLineMasterData()).__module__ + '-' + type(SpectralLineMasterData()).__name__
-        serializer.register_dict_to_class(className, SqlAlchemySerializer.dictToClassSpectralLineMasterData)
+    configure = SpectracsServerEndpoint.configure
 
     @expose
     def getSpectrometers(self)-> Dict[str, Spectrometer]:
