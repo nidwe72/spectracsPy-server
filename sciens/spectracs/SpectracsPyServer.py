@@ -62,6 +62,10 @@ class SpectracsPyServer(object):
         daemon.requestLoop()
 
     def __init__(self):
+        # Bring the SERVER database to schema head BEFORE bootstrap/seed (SPEC_schema_migrations.md §3.3,
+        # policy c). This is the process that owns spectracsPyServer.db.
+        from sciens.spectracs.model.databaseEntity.DatabaseInitializer import initServerDatabase
+        initServerDatabase()
         self.__createBootstrapSession()
         # Seed roles + the development users (endUser/endUser, masterUser/masterUser) into the
         # separate server DB. Idempotent — safe to run on every server start.
@@ -140,10 +144,28 @@ class SpectracsPyServer(object):
 
     @expose
     def savePlugin(self, title, codeRef, version, pdfRef=None) -> Dict:
-        # MASTER: upsert a plugin (keyed on codeRef).
+        # MASTER: publish a plugin version — INSERT one row per (codeRef, version), never upsert (B0). A
+        # published row is immutable; re-publishing an existing version is refused. (B2/B4 will widen this to
+        # carry source + signature; today the sealed columns stay null until the publish UI fills them.)
         from sciens.spectracs.logic.persistence.database.plugin.PersistPluginLogicModule import PersistPluginLogicModule
-        p = PersistPluginLogicModule().upsert(title, codeRef, version, pdfRef)
-        return {"ok": True, "id": p.id, "codeRef": p.codeRef}
+        try:
+            p = PersistPluginLogicModule().createVersion(title, codeRef, version, pdfRef)
+        except ValueError as error:
+            return {"ok": False, "message": str(error)}
+        return {"ok": True, "id": p.id, "codeRef": p.codeRef, "version": p.version}
+
+    @expose
+    def getPluginSource(self, codeRef, version) -> Dict:
+        # CLIENT loader (B3): return the SEALED row for (codeRef, version) so the client can verify the tuple
+        # and exec the source. The server is a dumb store — it never runs plugin code; the client's shipped
+        # TRUSTED_KEYS gate what it will load (SPEC_plugin_distribution.md §3 / §8, B3).
+        from sciens.spectracs.logic.persistence.database.plugin.PersistPluginLogicModule import PersistPluginLogicModule
+        p = PersistPluginLogicModule().findByCodeRefAndVersion(codeRef, version)
+        if p is None:
+            return {"ok": False, "message": "no such plugin version"}
+        return {"ok": True, "codeRef": p.codeRef, "version": p.version, "title": p.title,
+                "source": p.source, "signature": p.signature, "keyId": p.keyId,
+                "targetSdkVersion": p.targetSdkVersion}
 
     @expose
     def saveSpectrometerProfile(self, serial, deviceCodeName, calibration=None) -> Dict:
