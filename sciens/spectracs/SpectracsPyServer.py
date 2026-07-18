@@ -143,13 +143,16 @@ class SpectracsPyServer(object):
                 for p in PersistPluginLogicModule().listPlugins()]
 
     @expose
-    def savePlugin(self, title, codeRef, version, pdfRef=None) -> Dict:
+    def savePlugin(self, title, codeRef, version, pdfRef=None, source=None, signature=None,
+                   keyId=None, author=None, targetSdkVersion=None) -> Dict:
         # MASTER: publish a plugin version — INSERT one row per (codeRef, version), never upsert (B0). A
-        # published row is immutable; re-publishing an existing version is refused. (B2/B4 will widen this to
-        # carry source + signature; today the sealed columns stay null until the publish UI fills them.)
+        # published row is immutable; re-publishing an existing version is refused. The SEALED fields
+        # (source/signature/keyId/author/targetSdkVersion) are signed on the master (B4) and stored verbatim;
+        # the server never signs and never runs plugin code — it is a dumb store (§3).
         from sciens.spectracs.logic.persistence.database.plugin.PersistPluginLogicModule import PersistPluginLogicModule
         try:
-            p = PersistPluginLogicModule().createVersion(title, codeRef, version, pdfRef)
+            p = PersistPluginLogicModule().createVersion(
+                title, codeRef, version, pdfRef, source, signature, keyId, author, targetSdkVersion)
         except ValueError as error:
             return {"ok": False, "message": str(error)}
         return {"ok": True, "id": p.id, "codeRef": p.codeRef, "version": p.version}
@@ -174,10 +177,10 @@ class SpectracsPyServer(object):
         return InstrumentAuthoringLogicModule().saveProfile(serial, deviceCodeName, calibration)
 
     @expose
-    def saveSpectrometerSetup(self, serial, pluginCodeRef) -> Dict:
-        # MASTER: bind the serial's profile to a plugin.
+    def saveSpectrometerSetup(self, serial, pluginCodeRef, pluginVersion=None) -> Dict:
+        # MASTER: bind the serial's profile to the EXACT (codeRef, version) row (B5.2/F4).
         from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
-        return InstrumentAuthoringLogicModule().saveSetup(serial, pluginCodeRef)
+        return InstrumentAuthoringLogicModule().saveSetup(serial, pluginCodeRef, pluginVersion)
 
     @expose
     def listSpectrometerProfiles(self) -> List[Dict]:
