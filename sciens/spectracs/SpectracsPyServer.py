@@ -171,16 +171,30 @@ class SpectracsPyServer(object):
                 "targetSdkVersion": p.targetSdkVersion}
 
     @expose
-    def saveSpectrometerProfile(self, serial, deviceCodeName, calibration=None) -> Dict:
-        # MASTER: upsert the serial-keyed profile (device + calibration) on the server.
+    def saveSpectrometerProfile(self, serial, deviceCodeName, calibration=None, modelName=None, styleId=None) -> Dict:
+        # MASTER: upsert the serial-keyed profile (device + calibration) on the server. modelName + styleId (the
+        # factory tool) pick the exact spectrometer (model, camera, style), created if new.
         from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
-        return InstrumentAuthoringLogicModule().saveProfile(serial, deviceCodeName, calibration)
+        return InstrumentAuthoringLogicModule().saveProfile(serial, deviceCodeName, calibration, modelName, styleId)
 
     @expose
     def saveSpectrometerSetup(self, serial, pluginCodeRef, pluginVersion=None) -> Dict:
         # MASTER: bind the serial's profile to the EXACT (codeRef, version) row (B5.2/F4).
         from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
         return InstrumentAuthoringLogicModule().saveSetup(serial, pluginCodeRef, pluginVersion)
+
+    @expose
+    def getInstrumentCopy(self, username, password, serial) -> Dict:
+        # SPEC_shelly_instrument_memory.md S2: the signed SQLite copy of one instrument for its plug. It carries
+        # password hashes ⇒ only for a caller with valid credentials who is bound to `serial` or is a master.
+        from sciens.spectracs.logic.instrument.InstrumentCopyLogicModule import InstrumentCopyLogicModule
+        return InstrumentCopyLogicModule().buildForUser(username, password, serial)
+
+    @expose
+    def moveInstrumentToSerial(self, oldSerial, newSerial) -> Dict:
+        # MASTER (S8): a replaced plug = a new serial; the calibration stays with the optics.
+        from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
+        return InstrumentAuthoringLogicModule().moveToSerial(oldSerial, newSerial)
 
     @expose
     def listSpectrometerProfiles(self) -> List[Dict]:
