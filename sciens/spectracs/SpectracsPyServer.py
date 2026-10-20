@@ -171,11 +171,13 @@ class SpectracsPyServer(object):
                 "targetSdkVersion": p.targetSdkVersion}
 
     @expose
-    def saveSpectrometerProfile(self, serial, deviceCodeName, calibration=None, modelName=None, styleId=None) -> Dict:
-        # MASTER: upsert the serial-keyed profile (device + calibration) on the server. modelName + styleId (the
-        # factory tool) pick the exact spectrometer (model, camera, style), created if new.
+    def saveSpectrometerProfile(self, serial, deviceCodeName, calibration=None, modelName=None, styleId=None,
+                                lightSourceControllerType=None) -> Dict:
+        # MASTER: upsert the serial-keyed profile (device + calibration) on the server. modelName + styleId pick the
+        # exact spectrometer (model, camera, style), created if new; lightSourceControllerType what switches the lamp.
         from sciens.spectracs.logic.instrument.InstrumentAuthoringLogicModule import InstrumentAuthoringLogicModule
-        return InstrumentAuthoringLogicModule().saveProfile(serial, deviceCodeName, calibration, modelName, styleId)
+        return InstrumentAuthoringLogicModule().saveProfile(serial, deviceCodeName, calibration, modelName, styleId,
+                                                            lightSourceControllerType)
 
     @expose
     def saveSpectrometerSetup(self, serial, pluginCodeRef, pluginVersion=None) -> Dict:
